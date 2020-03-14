@@ -27,7 +27,7 @@ io.on('connection', function (socket) {
     socket.join(roomID);
     user = userName;
     //console.log(io.nsps['/'].adapter.rooms);	
-    //users[socket.id] = userName;
+    users[socket.id] = userName;
 
     count = io.nsps['/'].adapter.rooms[roomID].length;
     // user = userName;
@@ -42,13 +42,13 @@ io.on('connection', function (socket) {
     console.log(user + '已離開');
   });
   socket.on('chat message', function (msg) {
-    console.log(user + ':' + msg);
-    io.emit('chat message', user, msg);
+    console.log(users[socket.id] + ':' + msg);
+    io.emit('chat message', users[socket.id], msg);
   });
   //code before the pause
   setTimeout(function () {
     //do what you need here
-    if (count == 2 && gameStatus == 0) {
+    if (count == 3 && gameStatus == 0) {
       gameStatus = 1;
       for (var i = 0; i < id.length; i++) {
         var iRand = parseInt(id.length * Math.random());
