@@ -1,0 +1,158 @@
+<html>
+
+<head>
+    <title>test</title>
+    <style>
+        body,
+        html {
+            height: 100%;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        .bg-image {
+            /* The image used */
+            background-image: url("/test.jpg");
+
+            /* Add the blur effect */
+            filter: blur(8px);
+            -webkit-filter: blur(8px);
+
+            /* Full height */
+            height: 100%;
+
+            /* Center and scale the image nicely */
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+
+        /* Position text in the middle of the page/image */
+        .bg-text {
+            background-color: rgb(0, 0, 0);
+            /* Fallback color */
+            background-color: rgba(0, 0, 0, 0.4);
+            /* Black w/opacity/see-through */
+            color: white;
+            font-weight: bold;
+            border: 3px solid #f1f1f1;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            width: 80%;
+            padding: 20px;
+            /*text-align: center;*/
+        }
+
+        form {
+            background: rgb(182, 175, 175);
+            padding: 3px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        form input {
+            border: 0;
+            padding: 10px;
+            width: 90%;
+            margin-right: .5%;
+        }
+
+        form button {
+            width: 9%;
+            background: rgb(99, 100, 145);
+            border: none;
+            padding: 10px;
+        }
+
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #messages li {
+            padding: 5px 10px;
+        }
+
+        #messages li:nth-child(odd) {
+            background: rgba(0, 0, 0, 0.4);
+        }
+    </style>
+</head>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+<script>
+    $(function () {
+        var socket = io();
+        var userdata = sessionStorage.getItem("userdata");
+        var userName = sessionStorage.getItem("user");
+        while (userName == '' || userName == null) {
+            userName = prompt("請輸入名字");
+            sessionStorage.setItem("user", userName);
+        }
+        socket.on('connect', function () {
+            socket.emit('join', userName);
+        });
+        $('form').submit(function (e) {
+            e.preventDefault();
+            socket.emit('chat message', $('#m').val());
+            $('#m').val('');
+            return false;
+        });
+        socket.on('chat message', function (us, msg) {
+            $('#messages').append($('<li>').text(us + ":" + msg));
+        });
+        socket.on('newGamer', function (us,count) {
+            $('#messages').append($('<li>').text(us+"已經加入遊戲!"));
+            $('#messages').append($('<li>').text("目前連線人數: "+count));
+        });
+        socket.on('gamerDisconnect', function (us,count) {
+            $('#messages').append($('<li>').text(us+"已離開"));
+            $('#messages').append($('<li>').text("目前連線人數: "+count));
+        });
+        socket.on('giveID', function (id) {
+            $('#messages').append($('<li>').text("你被分配到的是"+idCheckName(id)));
+            sessionStorage.setItem("id",id);
+        });
+    });
+    function idCheckName(id) {
+        switch (id) {
+            case 0:
+                return "村民";
+                break;
+            case 1:
+                return "狼人";
+                break;
+            case 2:
+                return "預言家";
+                break;
+            case 3:
+                return "獵人";
+                break;
+            case 4:
+                return "女巫";
+                break;
+            default:
+                return "錯誤";
+                break;
+        }
+    }
+</script>
+
+<body>
+    <div class="bg-image"></div>
+    <div class="bg-text">
+        <ul id="messages"></ul>
+    </div>
+    <form>
+        <input id="m" autocomplete="off"><button>傳送</button>
+    </form>
+</body>
+
+</html>
