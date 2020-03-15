@@ -3,7 +3,7 @@ var app = express();
 var roomID;
 var isNight = 0;
 var users = {};
-var userID = {};
+var userID = {};//玩家狀態
 var wolfVote = {};
 var gameStatus = 0;
 var killPeople = "-1";
@@ -12,6 +12,7 @@ var witchSave = "0";
 var votePeople = 0;
 var vote = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 var id = [0, 0, 0, 1, 1, 1, 2, 3, 4];//0是村民,1是狼人,2是預言家,3是獵人,4是女巫
+var alreadyVote = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];//是否投票過
 var num = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
@@ -51,24 +52,26 @@ io.on('connection', function (socket) {
   });
   socket.on('chat message', function (msg) {
     if (userID[socket.id] == -1) {
-      io.in(socket.id).emit('server', '您為觀戰狀態，不能講話。');
+      io.in(socket.id).emit('server', '您為觀戰狀態，不能講話。');//玩家已死，userID設為-1，即觀戰狀態。
     }
-    else if (isNight != userID[socket.id] && isNight != 0) {
+    else if (isNight != userID[socket.id] && isNight != 0) {//isnight==0時，為白天狀態，任何未死玩家都能說話；
       io.in(socket.id).emit('server', '現在是夜晚，還不到你講話的時間。');
+      /*isnight!=0時，為黑夜狀態，平民 userID為0，所以只能在白天(isnight==0)說話；
+      其他職業要在isnight對應到自己職業的userID時，才能發言。*/
     }
     else if (msg.length > 30) {
       console.log(users[socket.id] + ':' + msg);
       console.log(users[socket.id] + '輸入超過最大上限!');
-      io.in(socket.id).emit('server', '您超過輸入字元最大上限(30字)!!');
+      io.in(socket.id).emit('server', '您超過輸入字元最大上限(30字)!!');//為避免超過介面，規定不超過30字
     }
     else if (msg == "" || msg == " ") {
       io.in(socket.id).emit('server', '輸入不可為空。');
     }
     else if (msg.substr(0, 6) == "/vote ") {
       console.log(users[socket.id] + ':' + msg);
-      if (gameStatus == 1 && isNight == 0) {
+      if (gameStatus == 1 && isNight == 0) {//因為投票是白天狀態(isNight == 0)唯一能做的遊戲功能，所以用gameStatus表示遊戲是否開始，如果未開始就不能用投票功能。
         var voteNum = 0;
-        io.emit('chat message', users[socket.id], msg);
+        io.emit('chat message', users[socket.id], msg);//
         for (var i = 0; i < num.length; i++) {
           if (msg.substr(6, msg.length - 6) == users[num[i]]) {
             vote[i]++;
@@ -97,9 +100,12 @@ io.on('connection', function (socket) {
           votePeople = 0;
           nightStart();
         }
+      }else{
+        console.log(user+'已經投過票');
+        io.emit('server', "你已經投過票了。");
       }
     }
-    else if (isNight == 1) {
+    else if (isNight == 1) {//狼人時間，只有狼人能說話，且只有狼人看得見
       for (var j = 0; j < num.length; j++) {
         if (userID[num[j]] == 1) {
           io.in(num[j]).emit('chat message', users[socket.id], msg);
@@ -127,7 +133,7 @@ io.on('connection', function (socket) {
       }
       console.log(users[socket.id] + ':' + msg);
     }
-    else if (isNight == 2) {
+    else if (isNight == 2) {//預言家時間，只有預言家能說話
       io.in(socket.id).emit('chat message', users[socket.id], msg);
       var findP = -1;
       if (msg.substr(0, 6) == "/find ") {
@@ -152,7 +158,7 @@ io.on('connection', function (socket) {
       }
       console.log(users[socket.id] + ':' + msg);
     }
-    else if (isNight == 4) {
+    else if (isNight == 4) {//判斷時間
       io.in(socket.id).emit('chat message', users[socket.id], msg);
       if (msg.substr(0, 6) == "/kill " && witchKill != "-1") {
         var killP = -1;
