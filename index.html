@@ -5,7 +5,7 @@
     <style>
         body,
         html {
-            height: 100%;
+            height: 90%;
         }
 
         * {
@@ -21,7 +21,7 @@
             -webkit-filter: blur(8px);
 
             /* Full height */
-            height: 100%;
+            height: 90%;
 
             /* Center and scale the image nicely */
             background-position: center;
@@ -39,11 +39,11 @@
             font-weight: bold;
             border: 3px solid #f1f1f1;
             position: absolute;
-            top: 50%;
+            top: 45%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 2;
-            width: 80%;
+            width: 90%;
             height: 80%;
             padding: 20px;
             overflow-x: hidden;
@@ -92,6 +92,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 <script>
+    
     $(function () {
         var socket = io();
         var userdata = sessionStorage.getItem("userdata");
@@ -112,17 +113,23 @@
         socket.on('chat message', function (us, msg) {
             $('#messages').append($('<li>').text(us + ":" + msg));
         });
+        socket.on('server', function (msg) {
+            $('#messages').append($('<li>').text(msg));
+        });
+        socket.on('findPeople', function (user,id) {
+            $('#messages').append($('<li>').text(user + "是" + idCheckName(id)));
+        });
+        socket.on('savePeople', function (user) {
+            $('#messages').append($('<li>').text(user + "被殺了。"));
+        });
         socket.on('newGamer', function (us, count) {
             $('#messages').append($('<li>').text(us + "已經加入遊戲!"));
-            $('#messages').append($('<li>').text("目前連線人數: " + count));
         });
         socket.on('gamerDisconnect', function (us, count) {
             $('#messages').append($('<li>').text(us + "已離開"));
-            $('#messages').append($('<li>').text("目前連線人數: " + count));
         });
         socket.on('giveID', function (id) {
             $('#messages').append($('<li>').text("你被分配到的是" + idCheckName(id)));
-            sessionStorage.setItem("id", id);
         });
     });
     function idCheckName(id) {
@@ -151,7 +158,7 @@
 
 <body>
     <div class="bg-image"></div>
-    <div class="bg-text">
+    <div class="bg-text" id="ttt">
         <ul id="messages"></ul>
     </div>
     <form>
