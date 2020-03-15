@@ -4,13 +4,13 @@ var roomID;
 var isNight = 0;
 var users = {};
 var userID = {};
-var vote = {};
 var wolfVote = {};
 var gameStatus = 0;
 var killPeople = "-1";
 var witchKill = "0";
 var witchSave = "0";
 var votePeople = 0;
+var vote = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 var id = [0, 0, 0, 1, 1, 1, 2, 3, 4];//0是村民,1是狼人,2是預言家,3是獵人,4是女巫
 var num = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 var http = require('http').createServer(app);
@@ -53,8 +53,51 @@ io.on('connection', function (socket) {
     if (userID[socket.id] == -1) {
       io.in(socket.id).emit('server', '您為觀戰狀態，不能講話。');
     }
-    else if (isNight != userID[socket.id] && isNight != -1) {
+    else if (isNight != userID[socket.id] && isNight != 0) {
       io.in(socket.id).emit('server', '現在是夜晚，還不到你講話的時間。');
+    }
+    else if (msg.length > 30) {
+      console.log(users[socket.id] + ':' + msg);
+      console.log(users[socket.id] + '輸入超過最大上限!');
+      io.in(socket.id).emit('server', '您超過輸入字元最大上限(30字)!!');
+    }
+    else if (msg == "" || msg == " ") {
+      io.in(socket.id).emit('server', '輸入不可為空。');
+    }
+    else if (msg.substr(0, 6) == "/vote ") {
+      console.log(users[socket.id] + ':' + msg);
+      if (gameStatus == 1 && isNight == 0) {
+        var voteNum = 0;
+        io.emit('chat message', users[socket.id], msg);
+        for (var i = 0; i < num.length; i++) {
+          if (msg.substr(6, msg.length - 6) == users[num[i]]) {
+            vote[i]++;
+            console.log(vote);
+            io.emit('server', users[num[i]] + "被" + users[socket.id] + "投了一票。");
+          }
+          voteNum += vote[i];
+        }
+        var idNum = 0;
+        for (var t = 0; t < id.length; t++) {
+          if (id[t] != -1) {
+            idNum++;
+          }
+        }
+        console.log(voteNum);
+        io.emit('server', "目前投票人數: " + voteNum + " / " + idNum);
+        if (voteNum == idNum) {
+          for (var i = 0; i < num.length; i++) {
+            if (vote[votePeople] < vote[i]) {
+              votePeople = i;
+            }
+          }
+          io.emit('server', user[votePeople] + "被投票出去。");
+          userID[num[votePeople]] = -1;
+          num.splice(votePeople - 1, 1);
+          votePeople = 0;
+          nightStart();
+        }
+      }
     }
     else if (isNight == 1) {
       for (var j = 0; j < num.length; j++) {
@@ -116,7 +159,7 @@ io.on('connection', function (socket) {
         for (var i = 0; i < num.length; i++) {
           if (msg.substr(6, msg.length - 6) == users[num[i]]) {
             witchKill = num[i];
-            isNight = -1;
+            isNight = 0;
             killP = 0;
             io.emit('server', "天亮了。");
             nightEnd();
@@ -133,7 +176,7 @@ io.on('connection', function (socket) {
           if (msg.substr(6, msg.length - 6) == users[num[i]] && num[i] == killPeople) {
             killPeople = 0;
             witchSave = -1;
-            isNight = -1;
+            isNight = 0;
             saveP = 0;
             io.emit('server', "天亮了。");
             nightEnd();
@@ -144,57 +187,19 @@ io.on('connection', function (socket) {
           io.in(socket.id).emit('server', "沒有此人，或此人並沒受到攻擊，請重新輸入。");
         }
       }
-      if (msg.substr(0, 5) == "/notDo") {
-        isNight = -1;
+      if (msg.substr(0, 6) == "/notDo") {
+        isNight = 0;
         io.emit('server', "天亮了。");
         nightEnd();
       }
       console.log(users[socket.id] + ':' + msg);
     }
-    else if (msg.length > 30) {
-      console.log(users[socket.id] + ':' + msg);
-      console.log(users[socket.id] + '輸入超過最大上限!');
-      io.in(socket.id).emit('server', '您超過輸入字元最大上限(30字)!!');
-    }
-    else if (msg == "" || msg == " ") {
-      io.in(socket.id).emit('server', '輸入不可為空。');
-    }
-    else if (msg.substr(0, 6) == "/vote ") {
-      console.log(users[socket.id] + ':' + msg);
-      var voteNum = 0;
-      console.log(voteNum);
-      io.emit('chat message', users[socket.id], msg);
-      for (var i = 0; i < num.length; i++) {
-        if (msg.substr(6, msg.length - 6) == users[num[i]]) {
-          vote[num]++;
-          io.emit('server', users[num[i]] + "被" + users[socket.id] + "投了一票。");
-          break;
-        }
-        voteNum += vote[num];
-      }
-      var idNum = 0;
-      for (var t = 0; t < id.length; t++) {
-        if (id[t] != -1) {
-          idNum++;
-        }
-      }
-      console.log(voteNum);
-      io.emit('server', "目前投票人數: " + voteNum + " / " + idNum);
-      if (voteNum == idNum) {
-        for (var i = 0; i < num.length; i++) {
-          if (vote[votePeople] < vote[num[i]]) {
-            votePeople = num[i];
-          }
-        }
-        io.emit('server', user[votePeople] + "被投票出去。");
-        votePeople = 0;
-        isNight = 1;
-        io.emit('server', '天黑請閉眼，狼人請睜眼。');
-      }
-    }
     else {
       console.log(users[socket.id] + ':' + msg);
       io.emit('chat message', users[socket.id], msg);
+      // if (isNight != 0) {
+      //   nightCheck(msg);
+      // }
     }
   });
   //code before the pause
@@ -219,9 +224,7 @@ io.on('connection', function (socket) {
         }
       });
       setTimeout(function () {
-
-        isNight = 1;
-        io.emit('server', '天黑請閉眼，狼人請睜眼。');
+        nightStart();
       }, 1000);
     }
     else if (gameStatus == 1 && userID[socket.id] == undefined) {
@@ -232,25 +235,48 @@ io.on('connection', function (socket) {
       io.emit('server', "遊戲人數未到達!請耐心等待遊戲開始!(" + count + "/9)");
     }
   }, 1000);
+  function nightStart() {
+    isNight = 1;
+    io.emit('server', '天黑請閉眼，狼人請睜眼。');
+    vote = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+  }
   function nightEnd() {
     if (killPeople == "0" || witchKill == "0") {
       io.emit('server', "昨晚是個平安夜。");
       io.emit('server', "請辯論後，投票出你們認為的狼人。");
     }
     else if (killPeople == "0") {
-      witchKill = -1;
       io.emit('server', users[witchKill] + "昨晚被殺了。");
+      num.splice(witchKill - 1, 1);
       userID[witchKill] = -1;
+      killPeople = -1;
+      witchKill = -1;
+      io.emit('server', "請辯論後，投票出你們認為的狼人。");
+    }
+    else if(witchKill == "0") {
+      io.emit('server', users[killPeople] + "昨晚被殺了。");
+      num.splice(killPeople - 1, 1);
+      userID[killPeople] = -1;
       killPeople = -1;
       io.emit('server', "請辯論後，投票出你們認為的狼人。");
     }
     else {
-      io.emit('server', users[killPeople] + "昨晚被殺了。");
+      io.emit('server', users[witchKill]+ "和" + users[killPeople] + "昨晚被殺了。");
+      num.splice(witchKill - 1, 1);
+      userID[witchKill] = -1;
+      witchKill = -1;
+      num.splice(killPeople - 1, 1);
       userID[killPeople] = -1;
       killPeople = -1;
       io.emit('server', "請辯論後，投票出你們認為的狼人。");
     }
   }
+  // function voteCheck() {
+
+  // }
+  // function nightCheck(msg) {
+
+  // }
 });
 http.listen(3000, function () {
   console.log('listening on *:3000');
