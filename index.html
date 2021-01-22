@@ -130,6 +130,9 @@
         socket.on('giveID', function(id) {
             $('#messages').append($('<li>').text("你被分配到的是" + idCheckName(id)));
         });
+        socket.on('giveNumber', function(id) {
+            $('#messages').append($('<li>').text("你的號碼是" + id));
+        });
     });
 
     function idCheckPeople(id) {

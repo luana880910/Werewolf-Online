@@ -1,3 +1,4 @@
+const e = require('express');
 var express = require('express');
 var app = express();
 var roomID;
@@ -13,6 +14,7 @@ var killPeople = "-1";
 var witchKill = "0";
 var witchSave = "0";
 var witchUse = 0;
+var hunterUse = 0;
 var findPeople = "0";
 var votePeople = "";
 var hunterId = 0;
@@ -44,7 +46,7 @@ io.on('connection', function(socket) {
         //console.log(io.nsps['/'].adapter.rooms);	
         count = io.nsps['/'].adapter.rooms[roomID].length;
         users[socket.id] = userName;
-        userNum[socket.id] = count;
+        // userNum[socket.id] = count;
         // user = userName;
         io.emit('newGamer', users[socket.id], count);
         console.log('目前連線人數: ' + count);
@@ -77,10 +79,9 @@ io.on('connection', function(socket) {
                 其他職業要在isnight對應到自己職業的userID時，才能發言。*/
             } else if (msg.substr(0, 6) == "/vote ") {
                 console.log(users[socket.id] + ':' + msg);
-                io.in(socket.id).emit('server', users[socket.id]+"（"+userNum[socket.id]+"號）"  + ":" + msg);
-    
+                io.in(socket.id).emit('server', users[socket.id] + "（" + userNum[socket.id] + "號）" + ":" + msg);
+                var voteNum = 0;
                 if (gameStatus == 1 && isNight == 0) { //因為投票是白天狀態(isNight == 0)唯一能做的遊戲功能，所以用gameStatus表示遊戲是否開始，如果未開始就不能用投票功能。
-                    var voteNum = 0;
                     for (var i = 0; i < num.length; i++) {
                         if (msg.substr(6, msg.length - 6) == userNum[num[i]]) {
                             if (userID[num[i]] == -1) {
@@ -89,7 +90,7 @@ io.on('connection', function(socket) {
                             } else if (hasVote[player.num] == 0) {
                                 vote[i]++;
                                 console.log(vote);
-                                io.emit('server', users[num[i]]+"（"+userNum[num[i]]+"號）" + "被" + users[socket.id] + "投了一票。");
+                                io.emit('server', users[num[i]] + "（" + userNum[num[i]] + "號）" + "被" + users[socket.id] + "（" + userNum[socket.id] + "號）" + "投了一票。");
                                 hasVote[player.num] = 1;
                                 break;
                             } else {
@@ -101,8 +102,8 @@ io.on('connection', function(socket) {
                             io.in(socket.id).emit('server', "沒有此人");
                         }
                     }
-                    for (var i = 0; i < num.length; i++) {
-                        voteNum += vote[i];
+                    for (var j = 0; j < num.length; j++) {
+                        voteNum += vote[j];
                     }
                 }
                 var idNum = 0;
@@ -121,8 +122,11 @@ io.on('connection', function(socket) {
                             votePeople = num[i];
                         }
                     }
-    
-                    io.emit('server', users[votePeople]+"（"+userNum[votePeople]+"號）"  + "被投票出去。");
+                    if (userID[votePeople] == 3) {
+                        hunterId = votePeople;
+                    }
+                    io.emit('server', users[votePeople] + "（" + userNum[votePeople] + "號）" + "被投票出去。");
+
                     userID[votePeople] = -1;
                     for (var i = 0; i < num.length; i++) {
                         hasVote[i] = 0;
@@ -130,12 +134,22 @@ io.on('connection', function(socket) {
                     }
                     // num.splice(votePeople - 1, 1);
                     votePeople = 0;
-                    if(gameRule() != ""){
-                        io.emit('server', gameRule());
-                        gameStatus = 0;
-                    }else{
-                        nightStart();
+                    isNight = 3;
+                    if (hunterId != 0) {
+                        userID[hunterId] = 3;
                     }
+                    io.emit('server', "現在有30秒鐘的時間可以開技能。");
+                    setTimeout(function() {
+                        if (isNight == 3) {
+                            userID[hunterId] = -1;
+                        }
+                        if (gameRule() != "") {
+                            io.emit('server', gameRule());
+                            gameStatus = 0;
+                        } else {
+                            nightStart();
+                        }
+                    }, 30000);
                 }
             } else if (isNight == 1) { //狼人時間，只有狼人能說話，且只有狼人看得見
                 wolfTime(player.name, socket.id, msg);
@@ -147,12 +161,12 @@ io.on('connection', function(socket) {
                 witchTime(player.name, socket.id, msg);
             } else {
                 console.log(users[socket.id] + ':' + msg);
-                io.emit('chat message', users[socket.id]+"（"+userNum[socket.id]+"號）", msg);
+                io.emit('chat message', users[socket.id] + "（" + userNum[socket.id] + "號）", msg);
             }
         } else {
             console.log(users[socket.id] + ':' + msg);
-            // io.emit('chat message', users[socket.id], msg);
-            io.emit('chat message', users[socket.id]+"（"+userNum[socket.id]+"號）", msg);
+            io.emit('chat message', users[socket.id], msg);
+            // io.emit('chat message', users[socket.id]+"（"+userNum[socket.id]+"號）", msg);
         }
     });
     //code before the pause
@@ -178,8 +192,12 @@ io.on('connection', function(socket) {
             io.clients((error, clients) => {
                 if (error) throw error;
                 console.log(clients);
+                for (var j = 0; j < num.length; j++) {
+                    userNum[clients[j]] = num[j];
+                }
                 for (var i = 0; i < clients.length; i++) {
                     io.in(clients[i]).emit('giveID', id[i]);
+                    io.in(clients[i]).emit('giveNumber', userNum[clients[i]] + "號");
                     userID[clients[i]] = id[i];
                     num[i] = clients[i];
                     console.log(clients[i] + " is " + id[i]);
@@ -219,7 +237,7 @@ function gamer(name, id, num) {
 function wolfTime(name, id, msg) {
     for (var j = 0; j < num.length; j++) {
         if (userID[num[j]] == 1) {
-            io.in(num[j]).emit('chat message', name+"（"+userNum[id]+"號）", msg);
+            io.in(num[j]).emit('chat message', name + "（" + userNum[id] + "號）", msg);
         }
     }
     if (msg.substr(0, 6) == "/kill ") {
@@ -250,7 +268,7 @@ function gameThread() {
     for (var m = 0; m < num.length; m++) {
         if (userID[num[m]] == 4) {
             if (killPeople != "0" && witchSave != "-1") {
-                io.in(num[m]).emit('savePeople', users[killPeople]+"（"+userNum[killPeople]+"號）");
+                io.in(num[m]).emit('savePeople', users[killPeople] + "（" + userNum[killPeople] + "號）");
             } else {
                 io.in(num[m]).emit('savePeople', "? ? ?");
             }
@@ -280,12 +298,12 @@ function gameThread() {
 }
 
 function prophetTime(name, id, msg) {
-    io.in(id).emit('chat message', name+"（"+userNum[id]+"號）", msg);
+    io.in(id).emit('chat message', name + "（" + userNum[id] + "號）", msg);
     var findP = -1;
     if (msg.substr(0, 6) == "/find " && findPeople == "0") {
         for (var i = 0; i < num.length; i++) {
             if (msg.substr(6, msg.length - 6) == userNum[num[i]]) {
-                io.in(id).emit('findPeople', users[num[i]]+"（"+userNum[num[i]]+"號）", userID[num[i]]);
+                io.in(id).emit('findPeople', users[num[i]] + "（" + userNum[num[i]] + "號）", userID[num[i]]);
                 findP = 0;
                 findPeople = "-1";
             }
@@ -301,29 +319,34 @@ function prophetTime(name, id, msg) {
 }
 
 function hunterTime(name, id, msg) {
-    io.in(id).emit('chat message', name+"（"+userNum[id]+"號）", msg);
-    if (msg.substr(0, 6) == "/kill " && userID[hunterId] == 3) {
+    io.in(id).emit('chat message', name + "（" + userNum[id] + "號）", msg);
+    if (msg.substr(0, 6) == "/kill " && userID[hunterId] == 3 && hunterUse == 0) {
+        var killP = -1;
+        hunterUse = 1;
         for (var i = 0; i < num.length; i++) {
             if (msg.substr(6, msg.length - 6) == userNum[num[i]] && userID[num[i]] != -1) {
                 userID[num[i]] = -1;
-                io.emit('server', users[num[i]]+"（"+userNum[num[i]]+"號）" + "被開槍帶走了。");
-                userID[hunterId] = -1;
-                isNight = 0;
-                io.emit('server', "請辯論後，投票出你們認為的狼人。");
+                killP = 0;
+                io.emit('server', users[num[i]] + "（" + userNum[num[i]] + "號）" + "被開槍帶走了。");
                 break;
             } else if (msg.substr(6, msg.length - 6) == userNum[num[i]] && userID[num[i]] == -1) {
                 io.in(id).emit('server', "此人已死亡，請重新輸入。");
                 break;
             }
+            if (killP == -1) {
+                io.in(id).emit('server', "沒有此人，請重新輸入。");
+            }
         }
-    } else if (msg.substr(0, 6) == "/kill " && userID[hunterId] != 3){
+    } else if (msg.substr(0, 6) == "/kill " && userID[hunterId] != 3) {
         io.in(id).emit('server', "您的技能被封印了。");
+    } else if (msg.substr(0, 6) == "/kill " && hunterUse == 1) {
+        io.in(id).emit('server', "您已開過槍");
     }
 }
 
 function witchTime(name, id, msg) {
 
-    io.in(id).emit('chat message', name+"（"+userNum[id]+"號）", msg);
+    io.in(id).emit('chat message', name + "（" + userNum[id] + "號）", msg);
     if (msg.substr(0, 6) == "/kill " && witchKill == "0" && witchUse == 0) {
         var killP = -1;
         witchUse = 1;
@@ -391,23 +414,23 @@ function nightEnd() {
     if (killPeople == "0" && (witchKill == "0" || witchKill == "-1")) {
         io.emit('server', "昨晚是個平安夜。");
     } else if (killPeople == "0") {
-        io.emit('server', users[witchKill]+"（"+userNum[witchKill]+"號）" + "昨晚被殺了。");
+        io.emit('server', users[witchKill] + "（" + userNum[witchKill] + "號）" + "昨晚被殺了。");
         // num.splice(witchKill - 1, 1);
         userID[witchKill] = -1;
         witchKill = "-1";
     } else if (witchKill == "0" || witchKill == "-1") {
-        io.emit('server', users[killPeople]+"（"+userNum[killPeople]+"號）" + "昨晚被殺了。");
+        io.emit('server', users[killPeople] + "（" + userNum[killPeople] + "號）" + "昨晚被殺了。");
         // num.splice(killPeople - 1, 1);
         userID[killPeople] = -1;
         killPeople = "0";
     } else if (killPeople == witchKill) {
-        io.emit('server', users[killPeople]+"（"+userNum[killPeople]+"號）" + "昨晚被殺了。");
+        io.emit('server', users[killPeople] + "（" + userNum[killPeople] + "號）" + "昨晚被殺了。");
         userID[witchKill] = -1;
         witchKill = "-1";
         userID[killPeople] = -1;
         killPeople = "0";
     } else {
-        io.emit('server', users[witchKill]+"（"+userNum[witchKill]+"號）" + "和" + users[killPeople] +"（"+userNum[killPeople]+"號）"+ "昨晚被殺了。");
+        io.emit('server', users[witchKill] + "（" + userNum[witchKill] + "號）" + "和" + users[killPeople] + "（" + userNum[killPeople] + "號）" + "昨晚被殺了。");
         // num.splice(witchKill - 1, 1);
         userID[witchKill] = -1;
         witchKill = "-1";
@@ -427,9 +450,13 @@ function nightEnd() {
             isNight = 0;
             // lastWords();
             io.emit('server', "請辯論後，投票出你們認為的狼人。");
+        } else {
+            userID[hunterId] = -1;
+            isNight = 0;
+            io.emit('server', "請辯論後，投票出你們認為的狼人。");
         }
     }, 30000);
-    if(gameRule() != ""){
+    if (gameRule() != "") {
         io.emit('server', gameRule());
         gameStatus = 0;
     }
@@ -446,23 +473,19 @@ function gameRule() {
     var GoodPeople = 0;
     var GodPeople = 0;
     for (var j = 0; j < num.length; j++) {
-        if(tempList[j] == 1){
+        if (tempList[j] == 1) {
             BadPeople = 1;
-        }
-        else if(tempList[j] == 0) {
+        } else if (tempList[j] == 0) {
             GoodPeople = 1;
-        }
-        else if(tempList[j] == 2||tempList[j] == 3||tempList[j] == 4){
+        } else if (tempList[j] == 2 || tempList[j] == 3 || tempList[j] == 4) {
             GodPeople = 1;
         }
     }
-    if (GoodPeople == 0 || GodPeople==0) {
+    if (GoodPeople == 0 || GodPeople == 0) {
         return "遊戲結束，狼人獲勝。";
-    }
-    else if(BadPeople == 0){
+    } else if (BadPeople == 0) {
         return "遊戲結束，好人獲勝。";
-    }
-    else{
+    } else {
         return "";
     }
 }
