@@ -50,7 +50,6 @@ io.on('connection', function(socket) {
         console.log('目前連線人數: ' + count);
         console.log('新玩家進入: ' + users[socket.id]);
         console.log(socket.id);
-        start();
     });
     socket.on('disconnect', function() {
         count--;
@@ -61,89 +60,98 @@ io.on('connection', function(socket) {
 
     socket.on('chat message', function(msg) {
         var player = gamer(users[socket.id], userID[socket.id], userNum[socket.id]);
-        if (player.id == -1) {
-            io.in(socket.id).emit('server', '您為觀戰狀態，不能講話。'); //玩家已死，userID設為-1，即觀戰狀態。
-        } else if (isNight != player.id && isNight != 0) { //isnight==0時，為白天狀態，任何未死玩家都能說話；
-            io.in(socket.id).emit('server', '現在是夜晚，還不到你講話的時間。');
-            /*isnight!=0時，為黑夜狀態，平民 userID為0，所以只能在白天(isnight==0)說話；
-            其他職業要在isnight對應到自己職業的userID時，才能發言。*/
-        } else if (msg.length > 30) {
+        if (msg.length > 30) {
             console.log(users[socket.id] + ':' + msg);
             console.log(users[socket.id] + '輸入超過最大上限!');
             io.in(socket.id).emit('server', '您超過輸入字元最大上限(30字)!!'); //為避免超過介面，規定不超過30字
         } else if (msg == "" || msg == " ") {
             io.in(socket.id).emit('server', '輸入不可為空。');
-        } else if (msg.substr(0, 6) == "/vote ") {
-            console.log(users[socket.id] + ':' + msg);
-            io.in(socket.id).emit('server', users[socket.id] + ":" + msg);
-
-            if (gameStatus == 1 && isNight == 0) { //因為投票是白天狀態(isNight == 0)唯一能做的遊戲功能，所以用gameStatus表示遊戲是否開始，如果未開始就不能用投票功能。
-                var voteNum = 0;
-                for (var i = 0; i < num.length; i++) {
-                    if (msg.substr(6, msg.length - 6) == users[num[i]]) {
-                        if (userID[num[i]] == -1) {
-                            io.in(socket.id).emit('server', "此人已死亡");
-                            break;
-                        } else if (hasVote[player.num] == 0) {
-                            vote[i]++;
-                            console.log(vote);
-                            io.emit('server', users[num[i]] + "被" + users[socket.id] + "投了一票。");
-                            hasVote[player.num] = 1;
-                            break;
-                        } else {
-                            console.log(player.name + '已經投過票');
-                            io.in(socket.id).emit('server', "你已經投過票了。");
-                            break;
+        } else if (msg.substr(0, 6) == "/start") {
+            start();
+        } else if (gameStatus == 1) {
+            if (player.id == -1) {
+                io.in(socket.id).emit('server', '您為觀戰狀態，不能講話。'); //玩家已死，userID設為-1，即觀戰狀態。
+            } else if (isNight != player.id && isNight != 0) { //isnight==0時，為白天狀態，任何未死玩家都能說話；
+                io.in(socket.id).emit('server', '現在是夜晚，還不到你講話的時間。');
+                /*isnight!=0時，為黑夜狀態，平民 userID為0，所以只能在白天(isnight==0)說話；
+                其他職業要在isnight對應到自己職業的userID時，才能發言。*/
+            } else if (msg.substr(0, 6) == "/vote ") {
+                console.log(users[socket.id] + ':' + msg);
+                io.in(socket.id).emit('server', users[socket.id] + ":" + msg);
+    
+                if (gameStatus == 1 && isNight == 0) { //因為投票是白天狀態(isNight == 0)唯一能做的遊戲功能，所以用gameStatus表示遊戲是否開始，如果未開始就不能用投票功能。
+                    var voteNum = 0;
+                    for (var i = 0; i < num.length; i++) {
+                        if (msg.substr(6, msg.length - 6) == users[num[i]]) {
+                            if (userID[num[i]] == -1) {
+                                io.in(socket.id).emit('server', "此人已死亡");
+                                break;
+                            } else if (hasVote[player.num] == 0) {
+                                vote[i]++;
+                                console.log(vote);
+                                io.emit('server', users[num[i]] + "被" + users[socket.id] + "投了一票。");
+                                hasVote[player.num] = 1;
+                                break;
+                            } else {
+                                console.log(player.name + '已經投過票');
+                                io.in(socket.id).emit('server', "你已經投過票了。");
+                                break;
+                            }
+                        } else if (i == num.length - 1) {
+                            io.in(socket.id).emit('server', "沒有此人");
                         }
-                    } else if (i == num.length - 1) {
-                        io.in(socket.id).emit('server', "沒有此人");
+                    }
+                    for (var i = 0; i < num.length; i++) {
+                        voteNum += vote[i];
                     }
                 }
-                for (var i = 0; i < num.length; i++) {
-                    voteNum += vote[i];
-                }
-            }
-            var idNum = 0;
-            for (var t = 0; t < 9; t++) {
-                if (userID[num[t]] != -1) {
-                    idNum++;
-                }
-            }
-            console.log(hasVote);
-            console.log("目前投票人數: " + voteNum + " / " + idNum);
-            io.emit('server', "目前投票人數: " + voteNum + " / " + idNum);
-            if (voteNum == idNum) {
-                var temp = 0;
-                for (var i = 0; i < num.length; i++) {
-                    if (vote[temp] < vote[i]) {
-                        votePeople = num[i];
+                var idNum = 0;
+                for (var t = 0; t < 9; t++) {
+                    if (userID[num[t]] != -1) {
+                        idNum++;
                     }
                 }
-
-                io.emit('server', users[votePeople] + "被投票出去。");
-                userID[votePeople] = -1;
-                for (var i = 0; i < num.length; i++) {
-                    hasVote[i] = 0;
-                    vote[i] = 0;
+                console.log(hasVote);
+                console.log("目前投票人數: " + voteNum + " / " + idNum);
+                io.emit('server', "目前投票人數: " + voteNum + " / " + idNum);
+                if (voteNum == idNum) {
+                    var temp = 0;
+                    for (var i = 0; i < num.length; i++) {
+                        if (vote[temp] < vote[i]) {
+                            votePeople = num[i];
+                        }
+                    }
+    
+                    io.emit('server', users[votePeople] + "被投票出去。");
+                    userID[votePeople] = -1;
+                    for (var i = 0; i < num.length; i++) {
+                        hasVote[i] = 0;
+                        vote[i] = 0;
+                    }
+                    // num.splice(votePeople - 1, 1);
+                    votePeople = 0;
+                    if(gameRule() != ""){
+                        io.emit('server', gameRule());
+                        gameStatus = 0;
+                    }else{
+                        nightStart();
+                    }
                 }
-                // num.splice(votePeople - 1, 1);
-                votePeople = 0;
-                nightStart();
+            } else if (isNight == 1) { //狼人時間，只有狼人能說話，且只有狼人看得見
+                wolfTime(player.name, socket.id, msg);
+            } else if (isNight == 2) { //預言家時間，只有預言家能說話
+                prophetTime(player.name, socket.id, msg);
+            } else if (isNight == 3) { //獵人時間，只有獵人可以看到
+                hunterTime(player.name, socket.id, msg);
+            } else if (isNight == 4) { //女巫&判斷時間，只有女巫能說話
+                witchTime(player.name, socket.id, msg);
+            } else {
+                console.log(users[socket.id] + ':' + msg);
+                io.emit('chat message', users[socket.id], msg);
             }
-        } else if (isNight == 1) { //狼人時間，只有狼人能說話，且只有狼人看得見
-            wolfTime(player.name, socket.id, msg);
-        } else if (isNight == 2) { //預言家時間，只有預言家能說話
-            prophetTime(player.name, socket.id, msg);
-        } else if (isNight == 3) { //獵人時間，只有獵人可以看到
-            hunterTime(player.name, socket.id, msg);
-        } else if (isNight == 4) { //女巫&判斷時間，只有女巫能說話
-            witchTime(player.name, socket.id, msg);
         } else {
             console.log(users[socket.id] + ':' + msg);
             io.emit('chat message', users[socket.id], msg);
-            // if (isNight != 0) {
-            //   nightCheck(msg);
-            // }
         }
     });
     //code before the pause
@@ -299,6 +307,8 @@ function hunterTime(name, id, msg) {
                 break;
             }
         }
+    } else if (msg.substr(0, 6) == "/kill " && userID[hunterId] != 3){
+        io.in(id).emit('server', "您的技能被封印了。");
     }
 }
 
@@ -410,9 +420,40 @@ function nightEnd() {
             io.emit('server', "請辯論後，投票出你們認為的狼人。");
         }
     }, 30000);
+    if(gameRule() != ""){
+        io.emit('server', gameRule());
+        gameStatus = 0;
+    }
 
 }
 
-function lastWords() {
-
+function gameRule() {
+    var tempList = [];
+    for (var i = 0; i < num.length; i++) {
+        tempList[i] = userID[num[i]];
+    }
+    console.log(tempList);
+    var BadPeople = 0;
+    var GoodPeople = 0;
+    var GodPeople = 0;
+    for (var j = 0; j < num.length; j++) {
+        if(tempList[j] == 1){
+            BadPeople = 1;
+        }
+        else if(tempList[j] == 0) {
+            GoodPeople = 1;
+        }
+        else if(tempList[j] == 2||tempList[j] == 3||tempList[j] == 4){
+            GodPeople = 1;
+        }
+    }
+    if (GoodPeople == 0 || GodPeople==0) {
+        return "遊戲結束，狼人獲勝。";
+    }
+    else if(BadPeople == 0){
+        return "遊戲結束，好人獲勝。";
+    }
+    else{
+        return "";
+    }
 }
