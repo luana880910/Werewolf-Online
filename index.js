@@ -77,19 +77,19 @@ io.on('connection', function(socket) {
                 其他職業要在isnight對應到自己職業的userID時，才能發言。*/
             } else if (msg.substr(0, 6) == "/vote ") {
                 console.log(users[socket.id] + ':' + msg);
-                io.in(socket.id).emit('server', users[socket.id] + ":" + msg);
+                io.in(socket.id).emit('server', users[socket.id]+"（"+userNum[socket.id]+"號）"  + ":" + msg);
     
                 if (gameStatus == 1 && isNight == 0) { //因為投票是白天狀態(isNight == 0)唯一能做的遊戲功能，所以用gameStatus表示遊戲是否開始，如果未開始就不能用投票功能。
                     var voteNum = 0;
                     for (var i = 0; i < num.length; i++) {
-                        if (msg.substr(6, msg.length - 6) == users[num[i]]) {
+                        if (msg.substr(6, msg.length - 6) == userNum[num[i]]) {
                             if (userID[num[i]] == -1) {
                                 io.in(socket.id).emit('server', "此人已死亡");
                                 break;
                             } else if (hasVote[player.num] == 0) {
                                 vote[i]++;
                                 console.log(vote);
-                                io.emit('server', users[num[i]] + "被" + users[socket.id] + "投了一票。");
+                                io.emit('server', users[num[i]]+"（"+userNum[num[i]]+"號）" + "被" + users[socket.id] + "投了一票。");
                                 hasVote[player.num] = 1;
                                 break;
                             } else {
@@ -122,7 +122,7 @@ io.on('connection', function(socket) {
                         }
                     }
     
-                    io.emit('server', users[votePeople] + "被投票出去。");
+                    io.emit('server', users[votePeople]+"（"+userNum[votePeople]+"號）"  + "被投票出去。");
                     userID[votePeople] = -1;
                     for (var i = 0; i < num.length; i++) {
                         hasVote[i] = 0;
@@ -147,11 +147,12 @@ io.on('connection', function(socket) {
                 witchTime(player.name, socket.id, msg);
             } else {
                 console.log(users[socket.id] + ':' + msg);
-                io.emit('chat message', users[socket.id], msg);
+                io.emit('chat message', users[socket.id]+"（"+userNum[socket.id]+"號）", msg);
             }
         } else {
             console.log(users[socket.id] + ':' + msg);
-            io.emit('chat message', users[socket.id], msg);
+            // io.emit('chat message', users[socket.id], msg);
+            io.emit('chat message', users[socket.id]+"（"+userNum[socket.id]+"號）", msg);
         }
     });
     //code before the pause
@@ -160,6 +161,14 @@ io.on('connection', function(socket) {
         if (count == 9 && gameStatus == 0) {
             io.emit('server', "遊戲開始");
             gameStatus = 1;
+            killPeople = "-1";
+            witchKill = "0";
+            witchSave = "0";
+            witchUse = 0;
+            findPeople = "0";
+            votePeople = "";
+            hunterId = 0;
+            firstNight = 0;
             for (var i = 0; i < id.length; i++) {
                 var iRand = parseInt(id.length * Math.random());
                 var temp = id[i];
@@ -210,12 +219,12 @@ function gamer(name, id, num) {
 function wolfTime(name, id, msg) {
     for (var j = 0; j < num.length; j++) {
         if (userID[num[j]] == 1) {
-            io.in(num[j]).emit('chat message', name, msg);
+            io.in(num[j]).emit('chat message', name+"（"+userNum[id]+"號）", msg);
         }
     }
     if (msg.substr(0, 6) == "/kill ") {
         for (var i = 0; i < num.length; i++) {
-            if (msg.substr(6, msg.length - 6) == users[num[i]] && userID[num[i]] != -1) {
+            if (msg.substr(6, msg.length - 6) == userNum[num[i]] && userID[num[i]] != -1) {
                 killPeople = num[i];
                 gameThread();
                 break;
@@ -223,7 +232,7 @@ function wolfTime(name, id, msg) {
                 killPeople = 0;
                 gameThread();
                 break;
-            } else if (msg.substr(6, msg.length - 6) == users[num[i]] && userID[num[i]] == -1) {
+            } else if (msg.substr(6, msg.length - 6) == userNum[num[i]] && userID[num[i]] == -1) {
                 io.in(id).emit('server', "此人已死亡，請重新輸入。");
                 break;
             }
@@ -241,7 +250,7 @@ function gameThread() {
     for (var m = 0; m < num.length; m++) {
         if (userID[num[m]] == 4) {
             if (killPeople != "0" && witchSave != "-1") {
-                io.in(num[m]).emit('savePeople', users[killPeople]);
+                io.in(num[m]).emit('savePeople', users[killPeople]+"（"+userNum[killPeople]+"號）");
             } else {
                 io.in(num[m]).emit('savePeople', "? ? ?");
             }
@@ -271,12 +280,12 @@ function gameThread() {
 }
 
 function prophetTime(name, id, msg) {
-    io.in(id).emit('chat message', name, msg);
+    io.in(id).emit('chat message', name+"（"+userNum[id]+"號）", msg);
     var findP = -1;
     if (msg.substr(0, 6) == "/find " && findPeople == "0") {
         for (var i = 0; i < num.length; i++) {
-            if (msg.substr(6, msg.length - 6) == users[num[i]]) {
-                io.in(id).emit('findPeople', users[num[i]], userID[num[i]]);
+            if (msg.substr(6, msg.length - 6) == userNum[num[i]]) {
+                io.in(id).emit('findPeople', users[num[i]]+"（"+userNum[num[i]]+"號）", userID[num[i]]);
                 findP = 0;
                 findPeople = "-1";
             }
@@ -292,17 +301,17 @@ function prophetTime(name, id, msg) {
 }
 
 function hunterTime(name, id, msg) {
-    io.in(id).emit('chat message', name, msg);
+    io.in(id).emit('chat message', name+"（"+userNum[id]+"號）", msg);
     if (msg.substr(0, 6) == "/kill " && userID[hunterId] == 3) {
         for (var i = 0; i < num.length; i++) {
-            if (msg.substr(6, msg.length - 6) == users[num[i]] && userID[num[i]] != -1) {
+            if (msg.substr(6, msg.length - 6) == userNum[num[i]] && userID[num[i]] != -1) {
                 userID[num[i]] = -1;
-                io.emit('server', users[num[i]] + "被開槍帶走了。");
+                io.emit('server', users[num[i]]+"（"+userNum[num[i]]+"號）" + "被開槍帶走了。");
                 userID[hunterId] = -1;
                 isNight = 0;
                 io.emit('server', "請辯論後，投票出你們認為的狼人。");
                 break;
-            } else if (msg.substr(6, msg.length - 6) == users[num[i]] && userID[num[i]] == -1) {
+            } else if (msg.substr(6, msg.length - 6) == userNum[num[i]] && userID[num[i]] == -1) {
                 io.in(id).emit('server', "此人已死亡，請重新輸入。");
                 break;
             }
@@ -314,17 +323,17 @@ function hunterTime(name, id, msg) {
 
 function witchTime(name, id, msg) {
 
-    io.in(id).emit('chat message', name, msg);
+    io.in(id).emit('chat message', name+"（"+userNum[id]+"號）", msg);
     if (msg.substr(0, 6) == "/kill " && witchKill == "0" && witchUse == 0) {
         var killP = -1;
         witchUse = 1;
         for (var i = 0; i < num.length; i++) {
-            if (msg.substr(6, msg.length - 6) == users[num[i]] && userID[num[i]] != -1) {
+            if (msg.substr(6, msg.length - 6) == userNum[num[i]] && userID[num[i]] != -1) {
                 witchKill = num[i];
                 killP = 0;
                 io.in(id).emit('server', "您已成功執行技能。");
                 break;
-            } else if (msg.substr(6, msg.length - 6) == users[num[i]] && userID[num[i]] == -1) {
+            } else if (msg.substr(6, msg.length - 6) == userNum[num[i]] && userID[num[i]] == -1) {
                 io.in(id).emit('server', "此人已死亡，請重新輸入。");
                 break;
             }
@@ -342,19 +351,19 @@ function witchTime(name, id, msg) {
         var saveP = -1;
         witchUse = 1;
         for (var i = 0; i < num.length; i++) {
-            if (msg.substr(6, msg.length - 6) == users[num[i]] && num[i] == killPeople && userID[killPeople] != 4) {
+            if (msg.substr(6, msg.length - 6) == userNum[num[i]] && num[i] == killPeople && userID[killPeople] != 4) {
                 killPeople = 0;
                 witchSave = -1;
                 saveP = 0;
                 io.in(id).emit('server', "您已成功執行技能。");
                 break;
-            } else if (msg.substr(6, msg.length - 6) == users[num[i]] && num[i] == killPeople && userID[killPeople] == 4 && firstNight == 0) {
+            } else if (msg.substr(6, msg.length - 6) == userNum[num[i]] && num[i] == killPeople && userID[killPeople] == 4 && firstNight == 0) {
                 killPeople = 0;
                 witchSave = -1;
                 saveP = 0;
                 io.in(id).emit('server', "您已成功執行技能。");
                 break;
-            } else if (msg.substr(6, msg.length - 6) == users[num[i]] && num[i] == killPeople && userID[killPeople] == 4 && firstNight != 0) {
+            } else if (msg.substr(6, msg.length - 6) == userNum[num[i]] && num[i] == killPeople && userID[killPeople] == 4 && firstNight != 0) {
                 io.in(id).emit('server', "您不能自救");
                 saveP = 0;
                 break;
@@ -382,23 +391,23 @@ function nightEnd() {
     if (killPeople == "0" && (witchKill == "0" || witchKill == "-1")) {
         io.emit('server', "昨晚是個平安夜。");
     } else if (killPeople == "0") {
-        io.emit('server', users[witchKill] + "昨晚被殺了。");
+        io.emit('server', users[witchKill]+"（"+userNum[witchKill]+"號）" + "昨晚被殺了。");
         // num.splice(witchKill - 1, 1);
         userID[witchKill] = -1;
         witchKill = "-1";
     } else if (witchKill == "0" || witchKill == "-1") {
-        io.emit('server', users[killPeople] + "昨晚被殺了。");
+        io.emit('server', users[killPeople]+"（"+userNum[killPeople]+"號）" + "昨晚被殺了。");
         // num.splice(killPeople - 1, 1);
         userID[killPeople] = -1;
         killPeople = "0";
     } else if (killPeople == witchKill) {
-        io.emit('server', users[killPeople] + "昨晚被殺了。");
+        io.emit('server', users[killPeople]+"（"+userNum[killPeople]+"號）" + "昨晚被殺了。");
         userID[witchKill] = -1;
         witchKill = "-1";
         userID[killPeople] = -1;
         killPeople = "0";
     } else {
-        io.emit('server', users[witchKill] + "和" + users[killPeople] + "昨晚被殺了。");
+        io.emit('server', users[witchKill]+"（"+userNum[witchKill]+"號）" + "和" + users[killPeople] +"（"+userNum[killPeople]+"號）"+ "昨晚被殺了。");
         // num.splice(witchKill - 1, 1);
         userID[witchKill] = -1;
         witchKill = "-1";
