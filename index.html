@@ -7,29 +7,26 @@
         html {
             height: 90%;
         }
-
+        
         * {
             box-sizing: border-box;
         }
-
+        
         .bg-image {
             /* The image used */
             background-image: url("/test.jpg");
-
             /* Add the blur effect */
             filter: blur(8px);
             -webkit-filter: blur(8px);
-
             /* Full height */
             height: 90%;
-
             /* Center and scale the image nicely */
             background-position: center;
             background-repeat: no-repeat;
             background-size: cover;
         }
-
         /* Position text in the middle of the page/image */
+        
         .bg-text {
             background-color: rgb(0, 0, 0);
             /* Fallback color */
@@ -50,7 +47,7 @@
             overflow-y: scroll;
             /*text-align: center;*/
         }
-
+        
         form {
             background: rgb(182, 175, 175);
             padding: 3px;
@@ -58,80 +55,91 @@
             bottom: 0;
             width: 100%;
         }
-
+        
         form input {
             border: 0;
             padding: 10px;
             width: 90%;
             margin-right: .5%;
         }
-
+        
         form button {
             width: 9%;
             background: rgb(99, 100, 145);
             border: none;
             padding: 10px;
         }
-
+        
         #messages {
             list-style-type: none;
             margin: 0;
             padding: 0;
         }
-
+        
         #messages li {
             padding: 5px 10px;
         }
-
+        
         #messages li:nth-child(odd) {
             background: rgba(0, 0, 0, 0.4);
-
         }
     </style>
 </head>
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 <script>
-    
-    $(function () {
+    $(function() {
         var socket = io();
         var userdata = sessionStorage.getItem("userdata");
         var userName = sessionStorage.getItem("user");
         while (userName == '' || userName == null) {
             userName = prompt("請輸入名字");
             sessionStorage.setItem("user", userName);
+
         }
-        socket.on('connect', function () {
+        socket.on('connect', function() {
             socket.emit('join', userName);
         });
-        $('form').submit(function (e) {
+        $('form').submit(function(e) {
             e.preventDefault();
             socket.emit('chat message', $('#m').val());
             $('#m').val('');
             return false;
         });
-        socket.on('chat message', function (us, msg) {
+        socket.on('chat message', function(us, msg) {
             $('#messages').append($('<li>').text(us + ":" + msg));
         });
-        socket.on('server', function (msg) {
+        socket.on('server', function(msg) {
             $('#messages').append($('<li>').text(msg));
         });
-        socket.on('findPeople', function (user,id) {
-            $('#messages').append($('<li>').text(user + "是" + idCheckName(id)));
+        socket.on('findPeople', function(user, id) {
+            $('#messages').append($('<li>').text(user + "是" + idCheckPeople(id)));
         });
-        socket.on('savePeople', function (user) {
+        socket.on('savePeople', function(user) {
             $('#messages').append($('<li>').text(user + "被殺了。"));
         });
-        socket.on('newGamer', function (us, count) {
+        socket.on('huntPeople', function(msg) {
+            $('#messages').append($('<li>').text("你的開槍狀態是" + msg));
+        });
+        socket.on('newGamer', function(us, count) {
             $('#messages').append($('<li>').text(us + "已經加入遊戲!"));
         });
-        socket.on('gamerDisconnect', function (us, count) {
+        socket.on('gamerDisconnect', function(us, count) {
             $('#messages').append($('<li>').text(us + "已離開"));
         });
-        socket.on('giveID', function (id) {
+        socket.on('giveID', function(id) {
             $('#messages').append($('<li>').text("你被分配到的是" + idCheckName(id)));
         });
     });
+
+    function idCheckPeople(id) {
+        if (id == 1) {
+            return "狼人";
+        } else {
+            return "好人";
+        }
+    }
+
     function idCheckName(id) {
         switch (id) {
             case 0:
