@@ -91,14 +91,11 @@
 <script>
     $(function () {
         var socket = io();
-        var userdata = sessionStorage.getItem("userdata");
-        var userName = sessionStorage.getItem("user");
-        while (userName == '' || userName == null) {
-            userName = prompt("請輸入名字");
-            sessionStorage.setItem("user", userName);
-        }
+        var userID = "<%= userID %>";
+        var userImg = "<%= userImg %>";
+        var userName = "<%= userName %>";
         socket.on('connect', function () {
-            socket.emit('join', userName);
+            socket.emit('join', userName,userID);
         });
         $('form').submit(function (e) {
             e.preventDefault();
