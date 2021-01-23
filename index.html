@@ -7,11 +7,11 @@
         html {
             height: 90%;
         }
-        
+
         * {
             box-sizing: border-box;
         }
-        
+
         .bg-image {
             /* The image used */
             background-image: url("/test.jpg");
@@ -25,8 +25,9 @@
             background-repeat: no-repeat;
             background-size: cover;
         }
+
         /* Position text in the middle of the page/image */
-        
+
         .bg-text {
             background-color: rgb(0, 0, 0);
             /* Fallback color */
@@ -47,7 +48,7 @@
             overflow-y: scroll;
             /*text-align: center;*/
         }
-        
+
         form {
             background: rgb(182, 175, 175);
             padding: 3px;
@@ -55,31 +56,31 @@
             bottom: 0;
             width: 100%;
         }
-        
+
         form input {
             border: 0;
             padding: 10px;
             width: 90%;
             margin-right: .5%;
         }
-        
+
         form button {
             width: 9%;
             background: rgb(99, 100, 145);
             border: none;
             padding: 10px;
         }
-        
+
         #messages {
             list-style-type: none;
             margin: 0;
             padding: 0;
         }
-        
+
         #messages li {
             padding: 5px 10px;
         }
-        
+
         #messages li:nth-child(odd) {
             background: rgba(0, 0, 0, 0.4);
         }
@@ -88,7 +89,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 <script>
-    $(function() {
+    $(function () {
         var socket = io();
         var userdata = sessionStorage.getItem("userdata");
         var userName = sessionStorage.getItem("user");
@@ -96,39 +97,47 @@
             userName = prompt("請輸入名字");
             sessionStorage.setItem("user", userName);
         }
-        socket.on('connect', function() {
+        socket.on('connect', function () {
             socket.emit('join', userName);
         });
-        $('form').submit(function(e) {
+        $('form').submit(function (e) {
             e.preventDefault();
             socket.emit('chat message', $('#m').val());
             $('#m').val('');
             return false;
         });
-        socket.on('chat message', function(us, msg) {
+        socket.on('chat message', function (us, msg) {
             $('#messages').append($('<li>').text(us + ":" + msg));
+            scrollSmoothToBottom('ttt');
         });
-        socket.on('server', function(msg) {
+        socket.on('server', function (msg) {
             $('#messages').append($('<li>').text(msg));
+            scrollSmoothToBottom('ttt');
         });
-        socket.on('findPeople', function(user, id) {
+        socket.on('findPeople', function (user, id) {
             $('#messages').append($('<li>').text(user + "是" + idCheckPeople(id)));
+            scrollSmoothToBottom('ttt');
         });
-        socket.on('savePeople', function(user) {
+        socket.on('savePeople', function (user) {
             $('#messages').append($('<li>').text(user + "被殺了。"));
+            scrollSmoothToBottom('ttt');
         });
-        socket.on('huntPeople', function(msg) {
+        socket.on('huntPeople', function (msg) {
             $('#messages').append($('<li>').text("你的開槍狀態是" + msg));
+            scrollSmoothToBottom('ttt');
         });
-        socket.on('newGamer', function(us, count) {
+        socket.on('newGamer', function (us, count) {
             $('#messages').append($('<li>').text(us + "已經加入遊戲!"));
+            scrollSmoothToBottom('ttt');
         });
-        socket.on('gamerDisconnect', function(us, count) {
+        socket.on('gamerDisconnect', function (us, count) {
             $('#messages').append($('<li>').text(us + "已離開"));
+            scrollSmoothToBottom('ttt');
         });
-        socket.on('giveGamer', function(gamer) {
+        socket.on('giveGamer', function (gamer) {
             $('#messages').append($('<li>').text("你被分配到的是" + idCheckName(gamer.id)));
             $('#messages').append($('<li>').text("你的號碼是" + gamer.num + "號"));
+            scrollSmoothToBottom('ttt');
         });
     });
 
@@ -161,6 +170,12 @@
                 return "錯誤";
                 break;
         }
+    }
+    function scrollSmoothToBottom(id) {
+        var div = document.getElementById(id);
+        $('#' + id).animate({
+            scrollTop: div.scrollHeight - div.clientHeight
+        }, 100);
     }
 </script>
 
