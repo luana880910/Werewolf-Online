@@ -90,7 +90,7 @@ io.on('connection', function (socket) {
                         //預計用作非遊玩人員的職業判斷(旁觀者)，如要新增需修改上方「count == 9」的判斷
                     }
                     console.log(gamers[i].name + " is " + gamers[i].id);
-                    io.emit('server', gamers[i].name + " 的號碼是：" + gamers[i].id);
+                    io.emit('server', gamers[i].name + " 的號碼是：" + gamers[i].num);
                 }
                 for (var i = 0; i < 9; i++) {
                     io.in(gamers[i].client).emit('giveGamer', gamers[i]); //回傳身分&號碼
