@@ -95,7 +95,6 @@
         while (userName == '' || userName == null) {
             userName = prompt("請輸入名字");
             sessionStorage.setItem("user", userName);
-
         }
         socket.on('connect', function() {
             socket.emit('join', userName);
@@ -108,39 +107,28 @@
         });
         socket.on('chat message', function(us, msg) {
             $('#messages').append($('<li>').text(us + ":" + msg));
-            scrollSmoothToBottom('ttt');
         });
         socket.on('server', function(msg) {
             $('#messages').append($('<li>').text(msg));
-            scrollSmoothToBottom('ttt');
         });
         socket.on('findPeople', function(user, id) {
             $('#messages').append($('<li>').text(user + "是" + idCheckPeople(id)));
-            scrollSmoothToBottom('ttt');
         });
         socket.on('savePeople', function(user) {
             $('#messages').append($('<li>').text(user + "被殺了。"));
-            scrollSmoothToBottom('ttt');
         });
         socket.on('huntPeople', function(msg) {
             $('#messages').append($('<li>').text("你的開槍狀態是" + msg));
-            scrollSmoothToBottom('ttt');
         });
         socket.on('newGamer', function(us, count) {
             $('#messages').append($('<li>').text(us + "已經加入遊戲!"));
-            scrollSmoothToBottom('ttt');
         });
         socket.on('gamerDisconnect', function(us, count) {
             $('#messages').append($('<li>').text(us + "已離開"));
-            scrollSmoothToBottom('ttt');
         });
-        socket.on('giveID', function(id) {
-            $('#messages').append($('<li>').text("你被分配到的是" + idCheckName(id)));
-            scrollSmoothToBottom('ttt');
-        });
-        socket.on('giveNumber', function(id) {
-            $('#messages').append($('<li>').text("你的號碼是" + id));
-            scrollSmoothToBottom('ttt');
+        socket.on('giveGamer', function(gamer) {
+            $('#messages').append($('<li>').text("你被分配到的是" + idCheckName(gamer.id)));
+            $('#messages').append($('<li>').text("你的號碼是" + gamer.num + "號"));
         });
     });
 
@@ -174,12 +162,6 @@
                 break;
         }
     }
-    function scrollSmoothToBottom (id) {
-        var div = document.getElementById(id);
-        $('#' + id).animate({
-        scrollTop: div.scrollHeight - div.clientHeight
-    }, 100);
-}
 </script>
 
 <body>
