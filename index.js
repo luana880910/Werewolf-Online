@@ -67,6 +67,7 @@ io.on('connection', function (socket) {
                 if (gamers[i].client == socket.id) {
                     socket.join(roomID);
                     gamers[i].socket = temp;
+                    io.in(gamers[i].socket).emit('giveGamer', gamers[i]);
                     io.emit('newGamer', users[socket.id]);
                 }
             }
@@ -145,10 +146,28 @@ io.on('connection', function (socket) {
         if (msg.length > 30) {
             console.log(users[socket.id] + ':' + msg);
             console.log(users[socket.id] + '輸入超過最大上限!');
-            io.in(socket.id).emit('server', '您超過輸入字元最大上限(30字)!!'); //為避免超過介面，規定不超過30字
+            io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '您超過輸入字元最大上限(30字)!!'); //為避免超過介面，規定不超過30字
         } else if (msg == "" || msg == " ") {
-            io.in(socket.id).emit('server', '輸入不可為空。');
-        } else if (msg.substr(0, 6) == "/start") {
+            console.log(users[socket.id] + ':' + msg);
+            io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '輸入不可為空。');
+        }else if(msg.substr(0, 5) == "/help") {
+            console.log(users[socket.id] + ':' + msg);
+            io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '遊戲介紹:');
+            io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '角色：預言家、女巫、獵人、三民、三狼人。');
+            io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '規則：好人獲勝方式 -> 狼人全部死亡，狼人獲勝方式 -> 神職(預女獵)、或三民死亡。');
+            io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '夜晚開始順序:');
+            io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '狼人(可以擁有無限時間討論) -> 女巫(狼人結束後30秒內必須決定) -> 預言家(女巫結束後30秒時間可以找人) -> 獵人(白天前可以看到自己是不是可以開槍)，白天前獵人死亡有30秒可以開槍。');
+        }
+        else if(msg.substr(0, 8) == "/command") {
+            console.log(users[socket.id] + ':' + msg);
+            io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '遊戲內指令集:');
+            io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '狼人: /kill (number)');   
+            io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '女巫: /kill (nuber) 使用毒藥 /save (number) 使用解藥');
+            io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '預言家: /find (number)');
+            io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '獵人: /kill (number)');
+            io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '票人階段: /vote (number)');
+        }
+        else if (msg.substr(0, 6) == "/start") {
             start();
         } else if (gameStatus == 1) {
             for (var i = 0; i < gamers.length; i++) {
@@ -227,7 +246,7 @@ io.on('connection', function (socket) {
                     }
                     votePeople = 0;
                     isNight = 3;
-                    io.emit('server', "現在有30秒鐘的時間可以開技能。");
+                    io.emit('server', "獵人現在有30秒鐘的時間可以開技能。");
                     setTimeout(function () {
                         if (hunterId != -1) {
                             if (isNight == 3) {
@@ -527,7 +546,7 @@ function nightEnd() { //夜晚判斷
             gamers[hunterId].id = 3;
         }
 
-        io.emit('server', "有30秒鐘的時間可以開技能。"); //給獵人啟動技能用
+        io.emit('server', "獵人有30秒鐘的時間可以開技能。"); //給獵人啟動技能用
         setTimeout(function () {
             if (gameRule() != "") {
                 io.emit('server', gameRule());
