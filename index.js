@@ -6,6 +6,8 @@ var id = [0, 0, 0, 1, 1, 1, 2, 3, 4]; //0是村民,1是狼人,2是預言家,3是
 var gamer; //目前的玩家
 var gamers = []; //全部的玩家
 var users = {}; //房間人員
+var usersImg = [];
+var states = ["天亮了，請辯論後，投票出你們認為的狼人。", "天黑請閉眼，狼人請睜眼。", "女巫請閉眼，預言家請睜眼，您有30秒的時間可以執行技能。", "獵人現在有30秒鐘的時間可以開技能。", "狼人請閉眼，女巫請睜眼，您有30秒的時間可以執行技能。"];
 var gameStatus = 0;
 var killPeople = -1;
 var witchKill = -1;
@@ -28,11 +30,11 @@ app.use(express.static(__dirname + '/asset'));
 app.set('views', __dirname + '/');
 app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'html');
-http.listen(process.env.PORT || 3000, function () {
+http.listen(process.env.PORT || 3000, function() {
     console.log('listening on *:3000');
 });
 
-app.get('/', function (req, res) {
+app.get('/', function(req, res) {
     userID = req.query.userID;
     userName = req.query.user;
     userImg = req.query.userImg;
@@ -40,14 +42,14 @@ app.get('/', function (req, res) {
     // res.render(__dirname + '/index.html');
 });
 
-io.on('connection', function (socket) {
+io.on('connection', function(socket) {
     var url = socket.request.headers.referer;
     var splited = url.split('/');
     var roomID = splited[splited.length - 1];
     if (roomID == '') {
         roomID = 'index';
     }
-    socket.on('join', function (userName, userID) {
+    socket.on('join', function(userName, userID, userImg) {
         var temp = socket.id;
         socket.id = userID;
         io.sockets.connected[userID] = io.sockets.connected[socket.id];
@@ -57,36 +59,41 @@ io.on('connection', function (socket) {
             usersID.push(socket.id);
             count = usersID.length;
             users[socket.id] = userName;
-            io.emit('server','目前連線人數: ' + count);
+            usersImg[socket.id] = userImg;
+
+            io.emit('server', '目前連線人數: ' + count);
             io.emit('newGamer', users[socket.id]);
             console.log('目前連線人數: ' + count);
             console.log('新玩家進入: ' + users[socket.id]);
             console.log(socket.id);
         } else if (gameStatus == 1) {
-            for(var i = 0; i < 9; i ++) {
+            for (var i = 0; i < 9; i++) {
                 if (gamers[i].client == socket.id) {
-                    socket.join(roomID);
+                    // socket.join(roomID);
                     gamers[i].socket = temp;
+                    io.emit('newGamer', users[socket.id]); //告訴其他人玩家回歸
                     io.in(gamers[i].socket).emit('giveGamer', gamers[i]);
-                    io.emit('newGamer', users[socket.id]);
+                    io.in(gamers[i].socket).emit('giveGamerImg', gamers); //回傳照片
+                    io.in(gamers[i].socket).emit('server', states[isNight]); //回傳狀態
+                    io.in(gamers[i].socket).emit('state', states[isNight]);
                 }
             }
         }
     });
-    socket.on('disconnect', function () {
-        if(usersID.indexOf(socket.id) >= 0 && gameStatus == 0) {
+    socket.on('disconnect', function() {
+        if (usersID.indexOf(socket.id) >= 0 && gameStatus == 0) {
             var i = usersID.indexOf(socket.id);
             usersID.splice(i, 1);
             var i = allsocketid.indexOf(socket.id);
-            allsocketid.splice(i,1);
-        }else if (usersID.indexOf(socket.id) >= 0 && gameStatus == 1) {
+            allsocketid.splice(i, 1);
+        } else if (usersID.indexOf(socket.id) >= 0 && gameStatus == 1) {
             //開始遊戲的人
-        }else {
+        } else {
             //觀戰狀態可寫
         }
         count = usersID.length;
         console.log('目前連線人數: ' + count);
-        io.emit('server','目前連線人數: ' + count);
+        io.emit('server', '目前連線人數: ' + count);
         io.emit('gamerDisconnect', users[socket.id]);
         console.log(users[socket.id] + '已離開');
     });
@@ -114,24 +121,23 @@ io.on('connection', function (socket) {
                 if (error) throw error;
                 for (var i = 0; i < 9; i++) { //物件建立
                     if (id[i] == 0) {
-                        gamers[i] = new Gamer(users[usersID[i]], id[i], i + 1, usersID[i],allsocketid[i]);
+                        gamers[i] = new Gamer(users[usersID[i]], id[i], i + 1, usersID[i], allsocketid[i], usersImg[usersID[i]]);
                     } else if (id[i] == 1) {
-                        gamers[i] = new Wolf(users[usersID[i]], id[i], i + 1, usersID[i],allsocketid[i]);
+                        gamers[i] = new Wolf(users[usersID[i]], id[i], i + 1, usersID[i], allsocketid[i], usersImg[usersID[i]]);
                     } else if (id[i] == 2) {
-                        gamers[i] = new Prophet(users[usersID[i]], id[i], i + 1, usersID[i],allsocketid[i]);
+                        gamers[i] = new Prophet(users[usersID[i]], id[i], i + 1, usersID[i], allsocketid[i], usersImg[usersID[i]]);
                     } else if (id[i] == 3) {
-                        gamers[i] = new Hunter(users[usersID[i]], id[i], i + 1, usersID[i],allsocketid[i]);
+                        gamers[i] = new Hunter(users[usersID[i]], id[i], i + 1, usersID[i], allsocketid[i], usersImg[usersID[i]]);
                     } else if (id[i] == 4) {
-                        gamers[i] = new Witch(users[usersID[i]], id[i], i + 1, usersID[i],allsocketid[i]);
+                        gamers[i] = new Witch(users[usersID[i]], id[i], i + 1, usersID[i], allsocketid[i], usersImg[usersID[i]]);
                     } else {
                         //預計用作非遊玩人員的職業判斷(旁觀者)，如要新增需修改上方「count == 9」的判斷
                     }
                     console.log(gamers[i].name + " is " + gamers[i].id);
                     io.emit('server', gamers[i].name + " 的號碼是：" + gamers[i].num);
                 }
-                for (var i = 0; i < 9; i++) {
-                    io.in(gamers[i].socket).emit('giveGamer', gamers[i]); //回傳身分&號碼
-                }
+                io.emit('giveGamer', gamers); //回傳身分&號碼
+                io.emit('giveGamerImg', gamers); //回傳照片
                 nightStart();
             });
         } else if (gameStatus == 1 && gamer.id == undefined) {
@@ -142,7 +148,7 @@ io.on('connection', function (socket) {
         }
     }
 
-    socket.on('chat message', function (msg) {
+    socket.on('chat message', function(msg) {
         if (msg.length > 30) {
             console.log(users[socket.id] + ':' + msg);
             console.log(users[socket.id] + '輸入超過最大上限!');
@@ -150,24 +156,22 @@ io.on('connection', function (socket) {
         } else if (msg == "" || msg == " ") {
             console.log(users[socket.id] + ':' + msg);
             io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '輸入不可為空。');
-        }else if(msg.substr(0, 5) == "/help") {
+        } else if (msg.substr(0, 5) == "/help") {
             console.log(users[socket.id] + ':' + msg);
             io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '遊戲介紹:');
             io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '角色：預言家、女巫、獵人、三民、三狼人。');
             io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '規則：好人獲勝方式 -> 狼人全部死亡，狼人獲勝方式 -> 神職(預女獵)、或三民死亡。');
             io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '夜晚開始順序:');
             io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '狼人(可以擁有無限時間討論) -> 女巫(狼人結束後30秒內必須決定) -> 預言家(女巫結束後30秒時間可以找人) -> 獵人(白天前可以看到自己是不是可以開槍)，白天前獵人死亡有30秒可以開槍。');
-        }
-        else if(msg.substr(0, 8) == "/command") {
+        } else if (msg.substr(0, 8) == "/command") {
             console.log(users[socket.id] + ':' + msg);
             io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '遊戲內指令集:');
-            io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '狼人: /kill (number)');   
+            io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '狼人: /kill (number)');
             io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '女巫: /kill (nuber) 使用毒藥 /save (number) 使用解藥');
             io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '預言家: /find (number)');
             io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '獵人: /kill (number)');
             io.in(allsocketid[usersID.indexOf(socket.id)]).emit('server', '票人階段: /vote (number)');
-        }
-        else if (msg.substr(0, 6) == "/start") {
+        } else if (msg.substr(0, 6) == "/start") {
             start();
         } else if (gameStatus == 1) {
             for (var i = 0; i < gamers.length; i++) {
@@ -246,8 +250,9 @@ io.on('connection', function (socket) {
                     }
                     votePeople = 0;
                     isNight = 3;
-                    io.emit('server', "獵人現在有30秒鐘的時間可以開技能。");
-                    setTimeout(function () {
+                    io.emit('server', states[isNight]);
+                    io.emit('state', states[isNight]);
+                    setTimeout(function() {
                         if (hunterId != -1) {
                             if (isNight == 3) {
                                 gamers[hunterId].id = -1;
@@ -318,27 +323,29 @@ io.on('connection', function (socket) {
 
     function nightStart() {
         isNight = 1;
-        io.emit('server', '天黑請閉眼，狼人請睜眼。');
+        io.emit('server', states[isNight]);
+        io.emit('state', states[isNight]);
         vote = [0, 0, 0, 0, 0, 0, 0, 0, 0];
     }
 });
 
 class Gamer {
-    constructor(name, id, num, client,socket) { //玩家的class，也是村民的建構函式，給其他職業繼承用
+    constructor(name, id, num, client, socket, img) { //玩家的class，也是村民的建構函式，給其他職業繼承用
         this.name = name;
         this.id = id;
         this.num = num;
         this.client = client;
         this.socket = socket;
+        this.img = img;
     }
-    kill() { }
-    find() { }
-    save() { }
+    kill() {}
+    find() {}
+    save() {}
 }
 
 class Wolf extends Gamer {
-    constructor(name, id, num, client,socket) {
-        super(name, id, num, client,socket);
+    constructor(name, id, num, client, socket, img) {
+        super(name, id, num, client, socket, img);
     }
     kill(msg) {
         for (var i = 0; i < gamers.length; i++) {
@@ -362,8 +369,8 @@ class Wolf extends Gamer {
 }
 
 class Prophet extends Gamer {
-    constructor(name, id, num, client,socket) {
-        super(name, id, num, client,socket);
+    constructor(name, id, num, client, socket, img) {
+        super(name, id, num, client, socket, img);
     }
     find(msg) {
         var findP = -1;
@@ -386,8 +393,8 @@ class Prophet extends Gamer {
 }
 
 class Witch extends Gamer {
-    constructor(name, id, num, client,socket) {
-        super(name, id, num, client,socket);
+    constructor(name, id, num, client, socket, img) {
+        super(name, id, num, client, socket, img);
     }
 
     kill(msg) {
@@ -439,8 +446,8 @@ class Witch extends Gamer {
 }
 
 class Hunter extends Gamer {
-    constructor(name, id, num, client,socket) {
-        super(name, id, num, client,socket);
+    constructor(name, id, num, client, socket, img) {
+        super(name, id, num, client, socket, img);
     }
     kill(msg) {
         var killP = -1;
@@ -465,7 +472,8 @@ class Hunter extends Gamer {
 
 function gameThread() { //時間間隔的事件觸發
     isNight = 4;
-    io.emit('server', "狼人請閉眼，女巫請睜眼，您有30秒的時間可以執行技能。");
+    io.emit('server', states[isNight]);
+    io.emit('state', states[isNight]);
     for (var m = 0; m < gamers.length; m++) {
         if (gamers[m].id == 4) {
             console.log(killPeople);
@@ -477,10 +485,11 @@ function gameThread() { //時間間隔的事件觸發
             }
         }
     }
-    setTimeout(function () {
+    setTimeout(function() {
         isNight = 2;
-        io.emit('server', "女巫請閉眼，預言家請睜眼，您有30秒的時間可以執行技能。");
-        setTimeout(function () {
+        io.emit('server', states[isNight]);
+        io.emit('state', states[isNight]);
+        setTimeout(function() {
             io.emit('server', "預言家請閉眼，獵人請睜眼。");
             for (var m = 0; m < gamers.length; m++) {
                 if (gamers[m].id == 3) {
@@ -539,15 +548,15 @@ function nightEnd() { //夜晚判斷
     if (gameRule() != "") {
         io.emit('server', gameRule());
         gameStatus = 0;
-    }
-    else {
+    } else {
         isNight = 3;
         if (hunterId != -1) {
             gamers[hunterId].id = 3;
         }
 
-        io.emit('server', "獵人有30秒鐘的時間可以開技能。"); //給獵人啟動技能用
-        setTimeout(function () {
+        io.emit('server', states[isNight]); //給獵人啟動技能用;
+        io.emit('state', states[isNight]);
+        setTimeout(function() {
             if (gameRule() != "") {
                 io.emit('server', gameRule());
                 gameStatus = 0;
@@ -557,11 +566,13 @@ function nightEnd() { //夜晚判斷
                         gamers[hunterId].id = -1;
                         isNight = 0;
                         // lastWords();
-                        io.emit('server', "請辯論後，投票出你們認為的狼人。");
+                        io.emit('server', states[isNight]);
+                        io.emit('state', states[isNight]);
                     }
                 } else {
                     isNight = 0;
-                    io.emit('server', "請辯論後，投票出你們認為的狼人。");
+                    io.emit('server', states[isNight]);
+                    io.emit('state', states[isNight]);
                 }
             }
         }, 30000);

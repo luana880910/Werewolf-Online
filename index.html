@@ -2,139 +2,88 @@
 
 <head>
     <title>test</title>
-    <style>
-        body,
-        html {
-            height: 90%;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        .bg-image {
-            /* The image used */
-            background-image: url("/test.jpg");
-            /* Add the blur effect */
-            filter: blur(8px);
-            -webkit-filter: blur(8px);
-            /* Full height */
-            height: 90%;
-            /* Center and scale the image nicely */
-            background-position: center;
-            background-repeat: no-repeat;
-            background-size: cover;
-        }
-
-        /* Position text in the middle of the page/image */
-
-        .bg-text {
-            background-color: rgb(0, 0, 0);
-            /* Fallback color */
-            background-color: rgba(0, 0, 0, 0.4);
-            /* Black w/opacity/see-through */
-            color: white;
-            font-weight: bold;
-            border: 3px solid #f1f1f1;
-            position: absolute;
-            top: 45%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 2;
-            width: 90%;
-            height: 80%;
-            padding: 20px;
-            overflow-x: hidden;
-            overflow-y: scroll;
-            /*text-align: center;*/
-        }
-
-        form {
-            background: rgb(182, 175, 175);
-            padding: 3px;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-        }
-
-        form input {
-            border: 0;
-            padding: 10px;
-            width: 90%;
-            margin-right: .5%;
-        }
-
-        form button {
-            width: 9%;
-            background: rgb(99, 100, 145);
-            border: none;
-            padding: 10px;
-        }
-
-        #messages {
-            list-style-type: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        #messages li {
-            padding: 5px 10px;
-        }
-
-        #messages li:nth-child(odd) {
-            background: rgba(0, 0, 0, 0.4);
-        }
-    </style>
+    <link rel="stylesheet" href="/css/main.css">
 </head>
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 <script>
-    $(function () {
+    $(function() {
         var socket = io();
         var userID = "<%= userID %>";
         var userImg = "<%= userImg %>";
         var userName = "<%= userName %>";
-        socket.on('connect', function () {
-            socket.emit('join', userName,userID);
+        var playerimg = ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9"];
+        socket.on('connect', function() {
+            socket.emit('join', userName, userID, userImg);
+            document.getElementById('nameState').innerHTML = userName;
         });
-        $('form').submit(function (e) {
+        $('.form-input-main').submit(function(e) {
             e.preventDefault();
-            socket.emit('chat message', $('#m').val());
-            $('#m').val('');
+            socket.emit('chat message', $('#maininput').val());
+            $('#maininput').val('');
             return false;
         });
-        socket.on('chat message', function (us, msg) {
-            $('#messages').append($('<li>').text(us + ":" + msg));
-            scrollSmoothToBottom('ttt');
+
+        $('.form-input').submit(function(e) {
+            e.preventDefault();
+            socket.emit('chat message', $('#groupinput').val());
+            $('#groupinput').val('');
+            return false;
         });
-        socket.on('server', function (msg) {
-            $('#messages').append($('<li>').text(msg));
-            scrollSmoothToBottom('ttt');
+
+        socket.on('chat message', function(us, msg) {
+            $('.mainchat').append($('<li>').text(us).append($('<div class="realmessage">').text(msg)));
+            scrollSmoothToBottom("chatmain");
         });
-        socket.on('findPeople', function (user, id) {
-            $('#messages').append($('<li>').text(user + "是" + idCheckPeople(id)));
-            scrollSmoothToBottom('ttt');
+
+        socket.on('server', function(msg) {
+            $('.groupchat').append($('<li class="status server">').text(msg));
+            scrollSmoothToBottom("chatgroup");
         });
-        socket.on('savePeople', function (user) {
-            $('#messages').append($('<li>').text(user + "被殺了。"));
-            scrollSmoothToBottom('ttt');
+
+        socket.on('state', function(msg) {
+            document.getElementById('now').innerHTML = msg;
         });
-        socket.on('huntPeople', function (msg) {
-            $('#messages').append($('<li>').text("你的開槍狀態是" + msg));
-            scrollSmoothToBottom('ttt');
+
+        socket.on('findPeople', function(user, id) {
+            $('.groupchat').append($('<li class="status findPeople">').text(user + "是" + idCheckPeople(id)));
+            scrollSmoothToBottom("chatgroup");
         });
-        socket.on('newGamer', function (us) {
-            $('#messages').append($('<li>').text(us + "已經加入遊戲!"));
-            scrollSmoothToBottom('ttt');
+        socket.on('savePeople', function(user) {
+            $('.groupchat').append($('<li class="status savePeople">').text(user + "被殺了。"));
+            scrollSmoothToBottom("chatgroup");
+
         });
-        socket.on('gamerDisconnect', function (us) {
-            $('#messages').append($('<li>').text(us + "已離開"));
-            scrollSmoothToBottom('ttt');
+        socket.on('huntPeople', function(msg) {
+            $('.groupchat').append($('<li class="status huntPeople">').text("你的開槍狀態是" + msg));
+            scrollSmoothToBottom("chatgroup");
         });
-        socket.on('giveGamer', function (gamer) {
-            $('#messages').append($('<li>').text("你被分配到的是" + idCheckName(gamer.id)));
-            $('#messages').append($('<li>').text("你的號碼是" + gamer.num + "號"));
-            scrollSmoothToBottom('ttt');
+        socket.on('newGamer', function(us, count) {
+            $('.groupchat').append($('<li class= "status newGamer">').text(us + "已經加入遊戲!"));
+            scrollSmoothToBottom("chatgroup");
+        });
+        socket.on('gamerDisconnect', function(us, count) {
+            $('.groupchat').append($('<li class= "status gamerDisconnect">').text(us + "已離開"));
+            scrollSmoothToBottom("chatgroup");
+        });
+
+        socket.on('giveGamer', function(gamers) {
+            var gamer;
+            for (var i = 0; i < 9; i++) {
+                if (gamers[i].client == userID) {
+                    gamer = gamers[i];
+                    break;
+                }
+            }
+            document.getElementById('nameState').innerHTML += "&emsp;角色: " + idCheckName(gamer.id);
+            document.getElementById('nameState').innerHTML += "&emsp;號碼: " + gamer.num + "號";
+
+        });
+
+        socket.on('giveGamerImg', function(gamers) {
+            for (var i = 0; i < 9; i++) {
+                document.getElementById(playerimg[i]).src = gamers[i].img;
+            }
         });
     });
 
@@ -168,6 +117,7 @@
                 break;
         }
     }
+
     function scrollSmoothToBottom(id) {
         var div = document.getElementById(id);
         $('#' + id).animate({
@@ -178,12 +128,69 @@
 
 <body>
     <div class="bg-image"></div>
-    <div class="bg-text" id="ttt">
-        <ul id="messages"></ul>
+    <div class="statusbar">
+        <div class="name" id="nameState">角色狀態等等
+        </div>
     </div>
-    <form>
-        <input id="m" autocomplete="off"><button>傳送</button>
-    </form>
+    <div class="main-game">
+        <div class="game-status" id="now">現在遊戲狀態等等</div>
+        <table class="characters">
+            <tr>
+                <td class="player-row-data">1<br>
+                    <img id="p1" height="90">
+                </td>
+                <td class="player-row-data">2<br>
+                    <img id="p2" height="90">
+                </td>
+                <td class="player-row-data">3<br>
+                    <img id="p3" height="90">
+                </td>
+                <td class="player-row-data">4<br>
+                    <img id="p4" height="90">
+                </td>
+                <td class="player-row-data">5<br>
+                    <img id="p5" height="90">
+                </td>
+                <td class="player-row-data">6<br>
+                    <img id="p6" height="90">
+                </td>
+                <td class="player-row-data">7<br>
+                    <img id="p7" height="90">
+                </td>
+                <td class="player-row-data">8<br>
+                    <img id="p8" height="90">
+                </td>
+                <td class="player-row-data">9<br>
+                    <img id="p9" height="90">
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="console-message-wrapper">
+        系統頻道
+        <div class="bg-text" id="chatgroup">
+            <ul id="messages" class="groupchat">
+            </ul>
+        </div>
+    </div>
+
+    <div class="main-message-wrapper">
+        主要頻道
+        <div class="bg-text" id="chatmain">
+            <ul id="messages" class="mainchat">
+            </ul>
+        </div>
+        <div class="form-group">
+            <form class="form-input-main">
+                <input id="maininput" class="m" autocomplete="off"><button id="submit-main">傳送</button>
+            </form>
+        </div>
+    </div>
+    <script type="text/javascript">
+        var userName = sessionStorage.getItem("user");
+        document.getElementsByClassName('name').innerHTML = userName;
+    </script>
 </body>
 
 </html>

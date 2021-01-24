@@ -1,0 +1,320 @@
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #00000050;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgb(255, 255, 255);
+    border-radius: 5px;
+    transition-duration: 0.4s;
+    cursor: pointer;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgb(211, 211, 211);
+}
+
+body,
+html {
+    height: 90%;
+}
+
+* {
+    box-sizing: border-box;
+    font-family: '微軟正黑體';
+    animation-timing-function: ease-out;
+}
+
+*:focus {
+    outline: none;
+}
+
+.bg-image {
+    /* The image used */
+    background-image: url("/image/test.jpg");
+    /* Add the blur effect */
+    filter: blur(8px);
+    -webkit-filter: blur(8px);
+    /* Full height */
+    height: 90%;
+    /* Center and scale the image nicely */
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+
+/* Position text in the middle of the page/image */
+
+.bg-text {
+    margin-top: 10px;
+    color: white;
+    font-weight: bold;
+    border: 0px solid #f1f1f1;
+    position: relative;
+    z-index: 2;
+    height: 75%;
+    padding: 20px;
+    border-radius: 20px;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    text-align: left;
+}
+
+.m {
+    border: 0;
+    border-radius: 20px;
+    width: 70%;
+    padding: 10px;
+    margin-left: 20px;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-out;
+}
+
+.m:hover {
+    box-shadow: 0 0 3px 2px rgb(121, 121, 121);
+}
+
+.m:focus {
+    box-shadow: 0 0 3px 2px rgb(0, 0, 0);
+}
+
+#submit-main {
+    box-sizing: border-box;
+    background: rgb(99, 100, 145);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    transition-duration: 0.4s;
+    margin-left: 10px;
+    position: relative;
+    cursor: pointer;
+}
+
+#submit-main:hover {
+    background: rgb(255, 255, 255);
+    color: rgb(0, 0, 0);
+    box-shadow: inset rgb(99, 100, 145) 0 0 2px 2px;
+}
+
+#submit {
+    box-sizing: border-box;
+    background: rgb(99, 100, 145);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    transition-duration: 0.4s;
+    margin-left: 10px;
+    position: relative;
+    cursor: pointer;
+}
+
+#submit:hover {
+    background: rgb(255, 255, 255);
+    color: rgb(0, 0, 0);
+    box-shadow: inset rgb(99, 100, 145) 0 0 2px 2px;
+}
+
+.main-message-wrapper {
+    width: 30%;
+    height: 40%;
+    position: absolute;
+    right: 3%;
+    bottom: 10%;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 10px 20px;
+    border-radius: 30px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.console-message-wrapper {
+    width: 30%;
+    height: 38%;
+    position: absolute;
+    right: 3%;
+    top: 10%;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 10px 20px;
+    border-radius: 30px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+#messages {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    font-size: 20px;
+}
+
+#messages li {
+    padding: 5px 10px;
+}
+
+#messages li.status {
+    border-radius: 10px;
+    text-align: center;
+}
+
+#messages li.newGamer {
+    background-color: rgba(51, 255, 221, 0.6);
+}
+
+#messages li.gamerDisconnect {
+    background-color: rgba(0, 0, 0, 0.4);
+    color: white;
+}
+
+#messages li.findPeople {
+    background-color: rgba(255, 245, 100, 0.897);
+    color: black;
+}
+
+#messages li.huntPeople {
+    background-color: rgba(73, 255, 134, 0.712);
+    color: black;
+}
+
+#messages li.giveID {
+    background-color: rgba(40, 115, 255, 0.774)
+}
+
+#messages li.giveNum {
+    background-color: rgba(105, 40, 255, 0.774)
+}
+
+#messages li.savePeople {
+    background-color: rgb(167, 0, 0);
+}
+
+#messages li.server {
+    background-color: rgba(0, 0, 0, 0.486);
+}
+
+#messages li:not(:last-child) {
+    margin-bottom: 3px;
+}
+
+
+/* .realmessage {
+    border: 1px solid #ccc;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 20px;
+    padding: 5px 10px;
+    word-wrap: break-word;
+} */
+
+.realmessage {
+    margin-top: 15px;
+    color: black;
+    position: relative;
+    max-width: 30em;
+    background-color: #fff;
+    padding: 10px 20px;
+    font-size: 20px;
+    border-radius: 1rem;
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, .3), 0 0.0625rem 0.125rem rgba(0, 0, 0, .2);
+}
+
+.realmessage::before {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    bottom: 100%;
+    left: 0.75em;
+    border: .75rem solid transparent;
+    border-top: none;
+    border-bottom-color: #fff;
+    filter: drop-shadow(0 -0.0625rem 0.0625rem rgba(0, 0, 0, .1));
+}
+
+
+/* #messages li:nth-child(even) {
+    border: 1px solid #ccc;
+}
+
+#messages li:nth-child(odd) {
+    background: rgba(0, 0, 0, 0.4);
+} */
+
+.statusbar {
+    background: rgb(255, 217, 0);
+    position: absolute;
+    width: 100%;
+    top: 0;
+    height: 50px;
+    z-index: 50;
+    left: 0;
+}
+
+.statusbar .name {
+    width: 100%;
+    line-height: 50px;
+    margin: auto;
+    text-align: center;
+    vertical-align: middle;
+    position: absolute;
+}
+
+.main-game {
+    background-color: rgba(0, 0, 0, 0.4);
+    width: 60%;
+    height: 80%;
+    position: absolute;
+    left: 5%;
+    top: 10%;
+}
+
+.characters {
+    width: 100%;
+    height: 25%;
+    position: absolute;
+    bottom: 10%;
+}
+
+.player-row-data {
+    background-color: rgba(255, 255, 255, 1);
+    text-align: center;
+}
+
+.game-status {
+    color: white;
+    font-size: 50px;
+    width: 100%;
+    position: absolute;
+    top: 20%;
+    text-align: center;
+}
+
+.form-group {
+    height: 50px;
+    vertical-align: middle;
+}
+
+.form-input+.form-input-main {
+    margin-top: 10px;
+}
+
+.skill {
+    width: 40%;
+    border-radius: 20px;
+    border: 0px;
+    position: absolute;
+    height: 7%;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, -25%);
+    font-size: 26px;
+}
