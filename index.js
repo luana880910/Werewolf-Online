@@ -66,6 +66,7 @@ io.on('connection', function (socket) {
                 if (gamers[i].client == socket.id) {
                     socket.join(roomID);
                     gamers[i].socket = temp;
+                    io.emit('newGamer', users[socket.id], count);
                 }
             }
         }
