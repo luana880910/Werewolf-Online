@@ -123,11 +123,11 @@
             $('#messages').append($('<li>').text("你的開槍狀態是" + msg));
             scrollSmoothToBottom('ttt');
         });
-        socket.on('newGamer', function (us, count) {
+        socket.on('newGamer', function (us) {
             $('#messages').append($('<li>').text(us + "已經加入遊戲!"));
             scrollSmoothToBottom('ttt');
         });
-        socket.on('gamerDisconnect', function (us, count) {
+        socket.on('gamerDisconnect', function (us) {
             $('#messages').append($('<li>').text(us + "已離開"));
             scrollSmoothToBottom('ttt');
         });

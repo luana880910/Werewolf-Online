@@ -57,7 +57,8 @@ io.on('connection', function (socket) {
             usersID.push(socket.id);
             count = usersID.length;
             users[socket.id] = userName;
-            io.emit('newGamer', users[socket.id], count);
+            io.emit('server','目前連線人數: ' + count);
+            io.emit('newGamer', users[socket.id]);
             console.log('目前連線人數: ' + count);
             console.log('新玩家進入: ' + users[socket.id]);
             console.log(socket.id);
@@ -66,7 +67,7 @@ io.on('connection', function (socket) {
                 if (gamers[i].client == socket.id) {
                     socket.join(roomID);
                     gamers[i].socket = temp;
-                    io.emit('newGamer', users[socket.id], count);
+                    io.emit('newGamer', users[socket.id]);
                 }
             }
         }
@@ -84,7 +85,8 @@ io.on('connection', function (socket) {
         }
         count = usersID.length;
         console.log('目前連線人數: ' + count);
-        io.emit('gamerDisconnect', users[socket.id], count);
+        io.emit('server','目前連線人數: ' + count);
+        io.emit('gamerDisconnect', users[socket.id]);
         console.log(users[socket.id] + '已離開');
     });
 
