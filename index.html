@@ -13,6 +13,7 @@
         var userImg = "<%= userImg %>";
         var userName = "<%= userName %>";
         var playerimg = ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9"];
+        var backgroundimg = ["b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9"];
         socket.on('connect', function() {
             socket.emit('join', userName, userID, userImg);
             document.getElementById('nameState').innerHTML = userName;
@@ -66,7 +67,15 @@
             $('.groupchat').append($('<li class= "status gamerDisconnect">').text(us + "已離開"));
             scrollSmoothToBottom("chatgroup");
         });
-
+        socket.on('getGamerState', function(gamers) {
+            for (var i = 0; i < 9; i++) {
+                if (gamers[i].id === -1) {
+                    document.getElementById(backgroundimg[i]).style.background = '#808A87'; //把他變灰色
+                } else {
+                    document.getElementById(backgroundimg[i]).style.background = '#FFFFFF'; //把他變白色
+                }
+            }
+        })
         socket.on('giveGamer', function(gamers) {
             var gamer;
             for (var i = 0; i < 9; i++) {
@@ -75,8 +84,7 @@
                     break;
                 }
             }
-            document.getElementById('nameState').innerHTML += "&emsp;角色: " + idCheckName(gamer.id);
-            document.getElementById('nameState').innerHTML += "&emsp;號碼: " + gamer.num + "號";
+            document.getElementById('nameState').innerHTML = gamer.name + "&emsp;角色: " + idCheckName(gamer.id) + "&emsp;號碼: " + gamer.num + "號";
 
         });
 
@@ -128,7 +136,11 @@
 
 <body>
     <div class="bg-image"></div>
+    <div class="statusbar-bg"></div>
     <div class="statusbar">
+        <div class="command">移到我身上可以看說明書喔</div>
+        <div class="commandlist">狼人: /kill (number) 刀人 /kill not 空刀<br> 女巫: /kill (nuber) 使用毒藥 /save (number) 使用解藥<br> 預言家: /find (number)<br> 獵人: /kill (number)<br> 票人階段: /vote (number)</div>
+        <div class="commandlist-bg">狼人: /kill (number) 刀人 /kill not 空刀<br> 女巫: /kill (nuber) 使用毒藥 /save (number) 使用解藥<br> 預言家: /find (number)<br> 獵人: /kill (number)<br> 票人階段: /vote (number)</div>
         <div class="name" id="nameState">角色狀態等等
         </div>
     </div>
@@ -136,31 +148,31 @@
         <div class="game-status" id="now">現在遊戲狀態等等</div>
         <table class="characters">
             <tr>
-                <td class="player-row-data">1<br>
+                <td class="player-row-data" id="b1">1<br>
                     <img id="p1" height="90">
                 </td>
-                <td class="player-row-data">2<br>
+                <td class="player-row-data" id="b2">2<br>
                     <img id="p2" height="90">
                 </td>
-                <td class="player-row-data">3<br>
+                <td class="player-row-data" id="b3">3<br>
                     <img id="p3" height="90">
                 </td>
-                <td class="player-row-data">4<br>
+                <td class="player-row-data" id="b4">4<br>
                     <img id="p4" height="90">
                 </td>
-                <td class="player-row-data">5<br>
+                <td class="player-row-data" id="b5">5<br>
                     <img id="p5" height="90">
                 </td>
-                <td class="player-row-data">6<br>
+                <td class="player-row-data" id="b6">6<br>
                     <img id="p6" height="90">
                 </td>
-                <td class="player-row-data">7<br>
+                <td class="player-row-data" id="b7">7<br>
                     <img id="p7" height="90">
                 </td>
-                <td class="player-row-data">8<br>
+                <td class="player-row-data" id="b8">8<br>
                     <img id="p8" height="90">
                 </td>
-                <td class="player-row-data">9<br>
+                <td class="player-row-data" id="b9">9<br>
                     <img id="p9" height="90">
                 </td>
             </tr>
