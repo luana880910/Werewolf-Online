@@ -1,5 +1,7 @@
 # Werewolf-Online
 
+使用Node js、HTML、JavaScript、CSS
+
 ## 狼人殺線上版
 
 需要九人開局，由heroku架設，需要從別處網址登入，現在為第二版本。
